@@ -3,7 +3,7 @@
 
 # Example Videos
 
-The following are the videos and solution for the live/remote program for 010923
+The following are the videos and solution for the live program for 091123-WEST
 Included with the videos are links to the worksheet given to students and the final solution code from that specific lecture.   
 > Note: I often go back and clean up the solution code for students. There shouldn’t be any major differences outside of the organization. I did a particularly poor job of keeping my demo code inline with my comments during the first lecture, but the solution code should be organized correctly.  - ix 
 
