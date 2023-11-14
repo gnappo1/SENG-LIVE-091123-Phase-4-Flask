@@ -55,28 +55,27 @@ if __name__ == '__main__':
     
     # Create an empty pets array
     pets = []
-
     # Create a for loop that iterates over the owners array
-    for owner in owners:
+    # for owner in owners:
 
         # Create a for loop that iterates 1 - 3 times
-        for _ in range (random.randint(1,3)):
+    for _ in range (100):
 
-            # Use faker and the species, cat breeds, dog breeds and temperament Lists to create a pet
-            rand_species = random.choice(species)
+        # Use faker and the species, cat breeds, dog breeds and temperament Lists to create a pet
+        rand_species = random.choice(species)
 
-            pet = Pet(
-                name=fake.name(),
-                species=rand_species,
-                breed=random.choice(cat_breeds) if rand_species == "Cat" else random.choice(dog_breeds),
-                temperament=random.choice(temperaments),
-                owner_id=owner.id
-            )
+        pet = Pet(
+            name=fake.name(),
+            species=rand_species,
+            breed=random.choice(cat_breeds) if rand_species == "Cat" else random.choice(dog_breeds),
+            temperament=random.choice(temperaments),
+            # owner_id=owner.id
+        )
 
-            # Use .add and .commit to save the pet to the database
-            session.add(pet)
-            session.commit()
-        
-            # Append the pet to the pets array
-            pets.append(pet)
+        # Use .add and .commit to save the pet to the database
+        session.add(pet)
+        session.commit()
+    
+        # Append the pet to the pets array
+        pets.append(pet)
     import ipdb; ipdb.set_trace()
