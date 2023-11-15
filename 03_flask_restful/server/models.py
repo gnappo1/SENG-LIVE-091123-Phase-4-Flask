@@ -1,9 +1,10 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy_serializer import SerializerMixin
 
 db = SQLAlchemy()
 
 
-class Production(db.Model):
+class Production(db.Model, SerializerMixin):
     __tablename__ = "productions"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -19,7 +20,10 @@ class Production(db.Model):
     crew_members = db.relationship(
         "CrewMember", back_populates="production", cascade="all, delete-orphan"
     )
-
+    
+    # serialize_only = ("id", "title", "genre", "director", "description", "budget", "image", "ongoing")
+    serialize_rules = ("-crew_members.production",)
+    
     def __repr__(self):
         return f"""
             <Production #{self.id}:
@@ -33,20 +37,20 @@ class Production(db.Model):
             />
         """
 
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "genre": self.genre,
-            "director": self.director,
-            "budget": self.budget,
-            "image": self.image,
-            "ongoing": self.ongoing,
-            "description": self.description,
-        }
+    # def as_dict(self):
+    #     return {
+    #         "id": self.id,
+    #         "title": self.title,
+    #         "genre": self.genre,
+    #         "director": self.director,
+    #         "budget": self.budget,
+    #         "image": self.image,
+    #         "ongoing": self.ongoing,
+    #         "description": self.description,
+    #     }
 
 
-class CrewMember(db.Model):
+class CrewMember(db.Model, SerializerMixin):
     __tablename__ = "crew_members"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -66,10 +70,10 @@ class CrewMember(db.Model):
             />
         """
 
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "role": self.role,
-            "production_id": self.production_id,
-        }
+    # def as_dict(self):
+    #     return {
+    #         "id": self.id,
+    #         "name": self.name,
+    #         "role": self.role,
+    #         "production_id": self.production_id,
+    #     }

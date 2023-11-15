@@ -9,6 +9,8 @@ flask-sqlalchemy = "*"
 flask-migrate = "*"
 sqlalchemy-serializer = "*"
 jsonify = "*"
+flask-restful = "*"
+ipdb = "*"
 
 [dev-packages]
 ipdb = "*"
