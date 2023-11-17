@@ -1,79 +1,143 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy_serializer import SerializerMixin
+from sqlalchemy.orm import validates
+import re
 
 db = SQLAlchemy()
 
 
-class Production(db.Model, SerializerMixin):
+class Production(db.Model):
     __tablename__ = "productions"
 
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(80), nullable=False)
+    title = db.Column(db.String, nullable=False)
     genre = db.Column(db.String, nullable=False)
-    director = db.Column(db.String)
-    description = db.Column(db.String)
-    budget = db.Column(db.Float)
-    image = db.Column(db.String)
-    ongoing = db.Column(db.Boolean)
+    director = db.Column(db.String, nullable=False)
+    description = db.Column(db.String, nullable=False)
+    budget = db.Column(db.Float, nullable=False)
+    image = db.Column(db.String, nullable=False)
+    ongoing = db.Column(db.Boolean, nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
+    # &* Relationships
     crew_members = db.relationship(
-        "CrewMember", back_populates="production", cascade="all, delete-orphan"
+        "CrewMember", back_populates="production", cascade="all"
     )
-    
-    # serialize_only = ("id", "title", "genre", "director", "description", "budget", "image", "ongoing")
-    serialize_rules = ("-crew_members.production",)
-    
+
     def __repr__(self):
-        return f"""
-            <Production #{self.id}:
-                Title: {self.title}
-                Genre: {self.genre}
-                Director: {self.director}
-                Description: {self.description}
-                Budget: {self.budget}
-                Image: {self.image}
-                Ongoing: {self.ongoing}
-            />
-        """
+        return (
+            f"<Production #{self.id}:\n"
+            + f"Title: {self.title}"
+            + f"Genre: {self.genre}"
+            + f"Director: {self.director}"
+            + f"Budget: {self.budget}"
+            + f"Image: {self.image}"
+            + f"Ongoing: {self.ongoing}"
+            + f"Description: {self.description}"
+        )
 
-    # def as_dict(self):
-    #     return {
-    #         "id": self.id,
-    #         "title": self.title,
-    #         "genre": self.genre,
-    #         "director": self.director,
-    #         "budget": self.budget,
-    #         "image": self.image,
-    #         "ongoing": self.ongoing,
-    #         "description": self.description,
-    #     }
+    @validates("title")
+    def validate_title(self, _, title):
+        if not isinstance(title, str):
+            raise TypeError("Titles must be strings")
+        elif len(title) < 3:
+            raise ValueError(f"{title} has to be at least 3 characters long")
+        return title
+
+    @validates("genre")  # presence and inclusion
+    def validate_genre(self, _, genre):
+        if not isinstance(genre, str):
+            raise TypeError("Genres must be strings")
+        elif genre not in ["Drama", "Musical", "Opera"]:
+            raise ValueError(f"{genre} has to be one of Drama, Musical, Opera")
+        return genre
+
+    @validates("director")
+    def validate_director(self, _, director):
+        if not isinstance(director, str):
+            raise TypeError("Directors must be strings")
+        elif len(director.split(" ")) < 2:
+            raise ValueError(f"{director} has to be a string of at least two words")
+        return director
+
+    @validates("description")
+    def validate_description(self, _, description):
+        if not isinstance(description, str):
+            raise TypeError("Descriptions must be strings")
+        elif len(description) < 10:
+            raise ValueError(
+                f"{description} has to be a string of at least 10 characters"
+            )
+        return description
+
+    @validates("budget")
+    def validate_budget(self, _, budget):
+        if not isinstance(budget, float):
+            raise TypeError("Budgets must be floats")
+        elif budget < 0 or budget > 10000000:
+            raise ValueError(f"{budget} has to be a positive float under 10Millions")
+        return budget
+
+    @validates("image")
+    def validate_image(self, _, image):
+        if not isinstance(image, str):
+            raise TypeError("Images must be strings")
+        elif not re.match(r"^https?:\/\/.*\.(?:png|jpeg|jpg)$", image):
+            raise ValueError(
+                f"{image} has to be a string of a valid url ending in png, jpeg or jpg"
+            )
+        return image
+
+    @validates("ongoing")
+    def validate_ongoing(self, _, ongoing):
+        if not isinstance(ongoing, bool):
+            raise ValueError(f"{ongoing} has to be a boolean")
+        return ongoing
 
 
-class CrewMember(db.Model, SerializerMixin):
+class CrewMember(db.Model):
     __tablename__ = "crew_members"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), nullable=False)
+    name = db.Column(db.String, nullable=False)
     role = db.Column(db.String)
     production_id = db.Column(db.Integer, db.ForeignKey("productions.id"))
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
+
     production = db.relationship("Production", back_populates="crew_members")
 
     def __repr__(self):
-        return f"""
-            <Crewmember #{self.id}:
-                Name: {self.name}
-                Role: {self.role}
-                Production Id: {self.production_id}
-            />
-        """
+        return (
+            f"<CrewMember #{self.id}:\n"
+            + f"Name: {self.name}"
+            + f"Role: {self.role}"
+            + f"Production_id: {self.production_id}"
+        )
 
-    # def as_dict(self):
-    #     return {
-    #         "id": self.id,
-    #         "name": self.name,
-    #         "role": self.role,
-    #         "production_id": self.production_id,
-    #     }
+    @validates("name")
+    def validate_name(self, _, name):
+        if not isinstance(name, str):
+            raise TypeError("Names must be strings")
+        elif len(name.split(" ")) < 2:
+            raise ValueError(f"{name} has to be at least 2 words")
+        return name
+
+    @validates("role")
+    def validate_role(self, _, role):
+        if not isinstance(role, str):
+            raise TypeError("Roles must be strings")
+        elif len(role) < 2:
+            raise ValueError(f"{role} has to be at least 3 characters long")
+        return role
+
+    @validates("production_id")
+    def validate_production_id(self, _, production_id):
+        if not isinstance(production_id, int):
+            raise TypeError("Production ids must be integers")
+        elif production_id < 1:
+            raise ValueError(f"{production_id} has to be a positive integer")
+        elif not db.session.get(Production, production_id):
+            raise ValueError(
+                f"{production_id} has to correspond to an existing production"
+            )
+        return production_id
