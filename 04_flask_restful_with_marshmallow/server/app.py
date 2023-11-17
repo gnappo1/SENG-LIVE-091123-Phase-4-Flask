@@ -22,139 +22,73 @@ from flask import (
     request,
     g,
     session,
-    jsonify,
     render_template,
     make_response,
     abort,
 )
 from flask_migrate import Migrate
-from models import db, Production, CrewMember
-from werkzeug.exceptions import NotFound
-from time import time
-from sqlalchemy.exc import IntegrityError
 from flask_restful import Api, Resource, reqparse
 from flask_marshmallow import Marshmallow
-from marshmallow import fields, validates, validate, ValidationError
+from sqlalchemy.exc import IntegrityError
+from werkzeug.exceptions import NotFound
+from time import time
+from marshmallow import ValidationError
 
-#! App creation and configuration
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///theater.db"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SQLALCHEMY_ECHO"] = True
-
-#! flask-migrate setup
-migrate = Migrate(app, db)
-#! flask-sqlalchemy setup
-db.init_app(app)
-ma = Marshmallow(app)
-api = Api(app, prefix="/api/v1")
+from models.crew_member import CrewMember
+from models.production import Production
+from models import db
 
 
-class CrewMemberSchema(ma.SQLAlchemySchema):
-    class Meta:
-        # name of model
-        model = CrewMember
-        # avoid recreating objects on updates, only applies to deserialization (load())
-        # in order for this to work, flask-marshmallow (is specific to this wrapper)
-        # needs to know how an instance even looks like, note how we invoked load() on line 222
-        load_instance = True
-        #  if you set to True, Marshmallow will preserve the order of fields as defined in the schema.
-        ordered = True
-        # Specify which fields to serialize (not deserialize)
-        fields = ("id", "name", "role", "production_id", "production", "url")
+def main():
+    from schemas.crew_member_schema import CrewMemberSchema
+    from schemas.production_schema import ProductionSchema
 
-    #! Setup some app-level (aka no DB involved) validations
-    # * See more here https://marshmallow.readthedocs.io/en/stable/marshmallow.validate.html#module-marshmallow.validate
-    name = fields.String(required=True)
-    production = fields.Nested("ProductionSchema", exclude=("crew_members",))
-    production_id = fields.Integer(required=True)
-    role = fields.String(
-        required=True,
-        validate=validate.Length(
-            min=3,
-            max=50,
-            error="Role should be a string at least 3 chars long! But max 50!",
-        ),
-    )
+    #! App creation and configuration
+    app = Flask(__name__)
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///theater.db"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_ECHO"] = True
 
-    #! Create hyperlinks for easy navigation of your api
-    url = ma.Hyperlinks(
-        {
-            "self": ma.URLFor("crewmemberbyid", values=dict(id="<id>")),
-            "collection": ma.URLFor("crewmembers"),
-        }
-    )
+    #! flask-migrate setup
+    migrate = Migrate(app, db)
+    #! flask-sqlalchemy setup
+    db.init_app(app)
+    ma = Marshmallow(app)
+    api = Api(app, prefix="/api/v1")
 
-    #! Example of custom validation with marshmallow
-    #! (DANGER -> VERY similar to the syntax in the models)
-    @validates("name")
-    def validate_word_count(self, name):
-        words = name.split()
-        if len(words) < 2:
-            raise ValidationError("Text must contain at least two words")
+    #! Marshmallow Schemas
+    #! Create schema for a single crew_member
+    crew_member_schema = CrewMemberSchema()
+    #! Create schema for a collection of crew_members
+    # * Feel free to use only and exclude to customize
+    crew_members_schema = CrewMemberSchema(many=True)
 
+    #! Create schema for a single crew_member
+    production_schema = ProductionSchema()
+    #! Create schema for a collection of crew_members
+    # * Feel free to use only and exclude to customize
+    productions_schema = ProductionSchema(many=True, exclude=("crew_members",))
 
-#! Create schema for a single crew_member
-crew_member_schema = CrewMemberSchema()
-#! Create schema for a collection of crew_members
-# * Feel free to use only and exclude to customize
-crew_members_schema = CrewMemberSchema(many=True)
-
-
-class ProductionSchema(ma.SQLAlchemySchema):
-    #! The notes are the same as above in CrewMemberSchema ^^^
-    class Meta:
-        model = Production
-        load_instance = True
-        fields = (
-            "title",
-            "genre",
-            "budget",
-            "director",
-            "description",
-            "id",
-            "image",
-            "ongoing",
-            "crew_members",
-            "url",
-        )
-
-    crew_members = fields.Nested(
-        "CrewMemberSchema",
-        only=("id", "name", "role"),
-        exclude=("production",),
-        many=True,
-    )
-    title = fields.String(required=True, validate=validate.Length(min=2, max=50))
-    director = fields.String(required=True, validate=validate.Length(min=2, max=50))
-    description = fields.String(
-        required=True, validate=validate.Length(min=30, max=500)
-    )
-    genre = fields.String(required=True, validate=validate.Length(min=2, max=50))
-    image = fields.String(
-        required=True,
-        validate=validate.Regexp(
-            r".*\.(jpeg|png)", error="File URI must be in JPEG or PNG format"
-        ),
-    )
-    budget = fields.Float(
-        required=True, validate=validate.Range(min=0.99, max=500000000)
-    )
-
-    url = ma.Hyperlinks(
-        {
-            "self": ma.URLFor("productionbyid", values=dict(id="<id>")),
-            "collection": ma.URLFor("productions"),
-            "crewmembers": ma.URLFor("crewmembers"),
-        }
+    return (
+        app,
+        api,
+        db,
+        crew_member_schema,
+        crew_members_schema,
+        production_schema,
+        productions_schema,
     )
 
 
-#! Create schema for a single crew_member
-production_schema = ProductionSchema()
-#! Create schema for a collection of crew_members
-# * Feel free to use only and exclude to customize
-productions_schema = ProductionSchema(many=True, exclude=("crew_members",))
+(
+    app,
+    api,
+    db,
+    crew_member_schema,
+    crew_members_schema,
+    production_schema,
+    productions_schema,
+) = main()
 
 
 #! Global Error Handling
