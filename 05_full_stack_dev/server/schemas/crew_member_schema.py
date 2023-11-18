@@ -1,9 +1,9 @@
-from . import fields, validates, validate, ValidationError, ma
+from . import fields, validates, validate, ValidationError
 from models.crew_member import CrewMember
-
+from app_setup import ma
 
 class CrewMemberSchema(ma.SQLAlchemySchema):
-    class Meta(ma.SQLAlchemySchema.Meta):
+    class Meta():
         # name of model
         model = CrewMember
         # avoid recreating objects on updates, only applies to deserialization (load())

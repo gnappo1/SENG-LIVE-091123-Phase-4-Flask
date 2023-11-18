@@ -44,7 +44,7 @@ function ProductionForm({addProduction, handleNewError}) {
         <Formik
           initialValues={{ title: '', genre: '', budget: '', image: '', director: '', description: '', ongoing: '' }}
           validationSchema={productionSchema}
-          onSubmit={(values, actions) => {
+          onSubmit={(values) => {
             fetch("/productions", {
               method: "POST",
               headers: {

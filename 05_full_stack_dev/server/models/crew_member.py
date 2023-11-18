@@ -1,5 +1,7 @@
-from . import db, validates, re
+from . import validates, re
 from .production import Production
+from app_setup import db
+
 
 class CrewMember(db.Model):
     __tablename__ = "crew_members"

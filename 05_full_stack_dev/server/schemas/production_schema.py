@@ -1,31 +1,23 @@
-from . import fields, validate, ma
+from . import fields, validate
 from models.production import Production
 from .crew_member_schema import CrewMemberSchema
+from app_setup import ma
+
 
 class ProductionSchema(ma.SQLAlchemySchema):
-    #! The notes are the same as above in CrewMemberSchema ^^^
-    class Meta(ma.SQLAlchemySchema.Meta):
+    class Meta():
         model = Production
         load_instance = True
-        fields = (
-            "title",
-            "genre",
-            "budget",
-            "director",
-            "description",
-            "id",
-            "image",
-            "ongoing",
-            "crew_members",
-            "url",
-        )
+        
 
     crew_members = fields.Nested(
         CrewMemberSchema,
         only=("id", "name", "role"),
         exclude=("production",),
         many=True,
+        dump_only=True
     )
+    id = fields.Integer()
     title = fields.String(required=True, validate=validate.Length(min=2, max=50))
     director = fields.String(required=True, validate=validate.Length(min=2, max=50))
     description = fields.String(
@@ -35,7 +27,7 @@ class ProductionSchema(ma.SQLAlchemySchema):
     image = fields.String(
         required=True,
         validate=validate.Regexp(
-            r".*\.(jpeg|png)", error="File URI must be in JPEG or PNG format"
+            r".*\.(jpeg|png|jpg)", error="File URI must be in JPEG or PNG format"
         ),
     )
     budget = fields.Float(

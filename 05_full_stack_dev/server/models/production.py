@@ -1,5 +1,5 @@
-from . import db, validates, re
-
+from . import validates, re
+from app_setup import db
 class Production(db.Model):
     __tablename__ = "productions"
 

@@ -1,4 +1,3 @@
-import React, {useState, useEffect} from 'react'
 import styled from 'styled-components'
 import { useHistory, useLocation } from 'react-router-dom'
 import { useFormik } from "formik"
@@ -6,8 +5,7 @@ import * as yup from "yup"
 
 
 
-function ProductionFormEdit({updateProduction}) {
-  const [error, setError] = useState(null)
+function ProductionFormEdit({updateProduction, handleNewError}) {
   //Student Challenge: GET One 
   const history = useHistory()
   const location = useLocation()
@@ -40,8 +38,7 @@ function ProductionFormEdit({updateProduction}) {
     description: yup.string()
       .min(10, 'Description must be at least 10 characters')
       .max(1000, 'Description must be at most 1000 characters')
-      .required('Description is required'),
-    ongoing: yup.boolean().required('Ongoing is required')
+      .required('Description is required')
   })
 
   const {id, title, genre, budget, image, director, description, ongoing, crew_members} = location.state.production
@@ -63,7 +60,7 @@ function ProductionFormEdit({updateProduction}) {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({...values, crew_members}, null, 2)
+        body: JSON.stringify(values, null, 2)
       })
       .then(res => {
         if (res.ok) {
@@ -72,16 +69,16 @@ function ProductionFormEdit({updateProduction}) {
             history.push(`/productions/${id}`)
           })
         } else {
-          res.json().then(data => setError(data.message))
+          res.json().then(errorObj => handleNewError(errorObj.message))
         }
       })
-      .catch(err => console.log(err))
+      .catch(error => handleNewError(error))
     }
   })
 
-  if(error) return <h2>{error}</h2>
+  if(!location.state.production) return <h2>Loading</h2>
 
-    return (
+  return (
       <div className='App'>
         <Form onSubmit={formik.handleSubmit}>
           <label>Title </label>
