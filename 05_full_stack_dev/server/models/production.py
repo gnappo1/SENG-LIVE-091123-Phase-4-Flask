@@ -85,5 +85,5 @@ class Production(db.Model):
     @validates("ongoing")
     def validate_ongoing(self, _, ongoing):
         if not isinstance(ongoing, bool):
-            raise ValueError(f"{ongoing} has to be a boolean")
+            raise ValueError(f"Ongoing has to be a boolean")
         return ongoing

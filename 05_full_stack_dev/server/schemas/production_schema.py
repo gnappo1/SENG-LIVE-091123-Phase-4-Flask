@@ -1,9 +1,10 @@
 from . import fields, validate, ma
 from models.production import Production
+from .crew_member_schema import CrewMemberSchema
 
 class ProductionSchema(ma.SQLAlchemySchema):
     #! The notes are the same as above in CrewMemberSchema ^^^
-    class Meta:
+    class Meta(ma.SQLAlchemySchema.Meta):
         model = Production
         load_instance = True
         fields = (
@@ -20,7 +21,7 @@ class ProductionSchema(ma.SQLAlchemySchema):
         )
 
     crew_members = fields.Nested(
-        "CrewMemberSchema",
+        CrewMemberSchema,
         only=("id", "name", "role"),
         exclude=("production",),
         many=True,

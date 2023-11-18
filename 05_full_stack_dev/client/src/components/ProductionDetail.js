@@ -1,24 +1,45 @@
 import  {useParams, useHistory } from 'react-router-dom'
 import {useEffect, useState} from 'react'
 import styled from 'styled-components'
+import NotFound from './NotFound'
 
-function ProductionDetail({handleEdit, deleteProduction}) {
-  const [production, setProduction] = useState({cast_members:[]})
-  const [error, setError] = useState(null)
+function ProductionDetail({handleEdit, deleteProduction, handleNewError}) {
+  const [production, setProduction] = useState({crew_members:[]})
+  // const [error, setError] = useState(null)
   //Student Challenge: GET One 
-  const params = useParams()
+  const {prod_id} = useParams()
   const history = useHistory()
+
   useEffect(()=>{
+    fetch(`/productions/${prod_id}`)
+    .then(response => {
+      if (response.ok){ //! if it's in 200-299 range
+        response.json().then(setProduction)
+      } else {
+        response.json().then(errorObj => handleNewError(errorObj.message))
+      }
+    })
+    .catch(handleNewError)
+  },[prod_id])
 
-  },[])
-
-  const handleDelete = (production) => {
-
+  const handleDelete = () => {
+    fetch(`/productions/${prod_id}`, {method: "DELETE"})
+    .then(response => {
+      if (response.ok){ //! 204
+        deleteProduction(prod_id)
+        history.push("/")
+      } else {
+        response.json().then(errorObj => handleNewError(errorObj.message))
+      }
+    })
+    .catch(handleNewError)
   }
 
-  
-  const {id, title, genre, image,description, cast_members} = production 
-  if(error) return <h2>{error}</h2>
+  if (!production.id) {
+    return <NotFound />
+  }
+  const {id, title, genre, image,description, crew_members} = production 
+  // if(error) return <h2>{error}</h2>
   return (
       <CardDetail id={id}>
         <h1>{title}</h1>
@@ -30,13 +51,13 @@ function ProductionDetail({handleEdit, deleteProduction}) {
               <p>{description}</p>
               <h2>Cast Members</h2>
               <ul>
-                {cast_members.map(cast => <li>{`${cast.role} : ${cast.name}`}</li>)}
+                {crew_members.map(cast => <li key={cast.id}>{`${cast.role} : ${cast.name}`}</li>)}
               </ul>
             </div>
             <img src={image} alt={title}/>
           </div>
       <button onClick={()=> handleEdit(production)} >Edit Production</button>
-      <button onClick={()=> handleDelete(production)} >Delete Production</button>
+      <button onClick={handleDelete} >Delete Production</button>
 
       </CardDetail>
     )

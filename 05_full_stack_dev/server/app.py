@@ -25,6 +25,7 @@ from flask import (
     render_template,
     make_response,
     abort,
+    current_app,
 )
 from flask_migrate import Migrate
 from flask_restful import Api, Resource, reqparse
@@ -36,13 +37,10 @@ from marshmallow import ValidationError
 
 from models.crew_member import CrewMember
 from models.production import Production
-from models import db
+from app_setup import app, api, db
 
 
 def main():
-    from schemas.crew_member_schema import CrewMemberSchema
-    from schemas.production_schema import ProductionSchema
-
     #! App creation and configuration
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///theater.db"
@@ -53,42 +51,22 @@ def main():
     migrate = Migrate(app, db)
     #! flask-sqlalchemy setup
     db.init_app(app)
-    ma = Marshmallow(app)
     api = Api(app, prefix="/api/v1")
 
-    #! Marshmallow Schemas
-    #! Create schema for a single crew_member
-    crew_member_schema = CrewMemberSchema()
-    #! Create schema for a collection of crew_members
-    # * Feel free to use only and exclude to customize
-    crew_members_schema = CrewMemberSchema(many=True)
-
-    #! Create schema for a single crew_member
-    production_schema = ProductionSchema()
-    #! Create schema for a collection of crew_members
-    # * Feel free to use only and exclude to customize
-    productions_schema = ProductionSchema(many=True, exclude=("crew_members",))
-
-    return (
-        app,
-        api,
-        db,
-        crew_member_schema,
-        crew_members_schema,
-        production_schema,
-        productions_schema,
-    )
+    return (app, api, db)
 
 
-(
-    app,
-    api,
-    db,
-    crew_member_schema,
-    crew_members_schema,
-    production_schema,
-    productions_schema,
-) = main()
+from schemas.crew_member_schema import CrewMemberSchema
+from schemas.production_schema import ProductionSchema
+
+#! Marshmallow Schemas
+#! Create schema for a single crew_member
+#! Create schema for a collection of crew_members
+# * Feel free to use only and exclude to customize
+
+#! Create schema for a single crew_member
+#! Create schema for a collection of crew_members
+# * Feel free to use only and exclude to customize
 
 
 #! Global Error Handling
@@ -126,6 +104,7 @@ def after_request(response):
 #! GET/POST Productions routes
 class Productions(Resource):
     def get(self):
+        productions_schema = ProductionSchema(many=True, exclude=("crew_members",))
         prods = productions_schema.dump(Production.query)
         return prods
 
@@ -133,6 +112,7 @@ class Productions(Resource):
         try:
             # * Extract data out of the request
             data = request.get_json()
+            production_schema = ProductionSchema()
             # * Validate the data, if problems arise you'll see ValidationError
             production_schema.validate(data)
             # * Deserialize the data with dump()
@@ -157,6 +137,7 @@ class ProductionById(Resource):
             id, description=f"Could not find production with id: {id}"
         )
         try:
+            production_schema = ProductionSchema()
             serialized_data = production_schema.dump(prod)
             return serialized_data, 200
         except Exception as e:
@@ -168,13 +149,16 @@ class ProductionById(Resource):
         )
         try:
             data = request.get_json()
+            production_schema = ProductionSchema()
             # * Validate the data, if problems arise you'll see ValidationError
             production_schema.validate(data)
             # * partial = True allows partial updates, meaning only the provided fields
             # * in the JSON data will be updated, and the rest will remain unchanged.
             # * Remember what we said about passing the instance to load() in order
             # * for marshmallow to reuse an existing object rather than recreating one?
-            updated_prod = production_schema.load(data, instance=prod, partial=True)
+            updated_prod = production_schema.load(
+                data, session=db.session, instance=prod, partial=True
+            )
             db.session.commit()
             #! pre-marshmallow code
             # for attr_name, attr_value in data.items():
@@ -204,6 +188,7 @@ api.add_resource(ProductionById, "/productions/<int:id>")
 #! GET/POST CrewMembers routes
 class CrewMembers(Resource):
     def get(self):
+        crew_members_schema = CrewMemberSchema(many=True)
         crew = crew_members_schema.dump(CrewMember.query)
         return crew, 200
 
@@ -211,6 +196,7 @@ class CrewMembers(Resource):
         try:
             data = request.json
             # * Validate the data, if problems arise you'll see ValidationError
+            crew_member_schema = CrewMemberSchema()
             crew_member_schema.validate(data)
             # * Deserialize the data with dump()
             crew = crew_member_schema.load(data)
@@ -234,6 +220,7 @@ class CrewMemberById(Resource):
         cm = CrewMember.query.get_or_404(
             id, description=f"Could not find crew_member with id: {id}"
         )
+        crew_member_schema = CrewMemberSchema()
         return crew_member_schema.dump(cm), 200
 
     def patch(self, id):
@@ -242,6 +229,7 @@ class CrewMemberById(Resource):
         )
         try:
             data = request.get_json()
+            crew_member_schema = CrewMemberSchema()
             crew_member_schema.validate(data)
             updated_crew = crew_member_schema.load(data, instance=cm, partial=True)
             #! pre-marshmallow logic
