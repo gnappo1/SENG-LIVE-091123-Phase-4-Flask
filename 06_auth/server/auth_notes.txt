@@ -1,0 +1,10 @@
+Implementing Authentication and Authorization in a FS Flask-React application
+
+- Why do we have to remember the user who attempted to login/signup?
+- How can we implement the logic? What are the options our there?
+- What are the steps involved in planning for such a big feature?
+
+BACKEND Notes:
+
+
+FRONTEND Notes:
