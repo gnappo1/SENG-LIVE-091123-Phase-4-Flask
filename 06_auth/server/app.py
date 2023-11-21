@@ -33,8 +33,10 @@ from marshmallow import ValidationError
 from app_setup import app, db, ma, api
 from models.crew_member import CrewMember
 from models.production import Production
+from models.user import User
 from schemas.crew_member_schema import CrewMemberSchema
 from schemas.production_schema import ProductionSchema
+from schemas.user_schema import UserSchema
 
 production_schema = ProductionSchema(session=db.session)
 productions_schema = ProductionSchema(
@@ -42,6 +44,9 @@ productions_schema = ProductionSchema(
 )
 crew_members_schema = CrewMemberSchema(many=True, session=db.session)
 crew_member_schema = CrewMemberSchema(session=db.session)
+users_schema = UserSchema(many=True, session=db.session)
+user_schema = UserSchema(session=db.session)
+
 
 #! Global Error Handling
 @app.errorhandler(NotFound)  #! 404
@@ -79,7 +84,9 @@ def after_request(response):
 class Productions(Resource):
     def get(self):
         prods = productions_schema.dump(Production.query)
-        return prods
+        response = make_response(prods, 200)
+        response.set_cookie("max_views", "4", httponly=True)
+        return response
 
     def post(self):
         try:
@@ -126,7 +133,9 @@ class ProductionById(Resource):
             # * in the JSON data will be updated, and the rest will remain unchanged.
             # * Remember what we said about passing the instance to load() in order
             # * for marshmallow to reuse an existing object rather than recreating one?
-            updated_prod = production_schema.load(data, instance=prod, partial=True, session=db.session)
+            updated_prod = production_schema.load(
+                data, instance=prod, partial=True, session=db.session
+            )
             db.session.commit()
             #! pre-marshmallow code
             # for attr_name, attr_value in data.items():
@@ -220,6 +229,61 @@ class CrewMemberById(Resource):
 
 
 api.add_resource(CrewMemberById, "/crew_members/<int:id>")
+
+
+@app.route("/api/v1/login", methods=["POST"])
+def login():
+    try:
+        # get email and psswd
+        data = request.get_json()
+        # query db by user email
+        user = User.query.filter_by(email=data.get("email")).first()
+        # if yes: now onto validating password -> if yes: send the serialized user to frontend
+        if user and user.authenticate(data.get("password")):
+            session["user_id"] = user.id
+            return user_schema.dump(user), 200
+        # if no: exception/error 403
+        return {"message": "Invalid Credentials"}, 403
+    except Exception as e:
+        return {"message": "Invalid Credentials"}, 403
+
+
+@app.route("/api/v1/signup", methods=["POST"])
+def signup():
+    try:
+        # * Extract data out of the request
+        data = {"email": request.get_json().get("email")}
+        # * Validate the data, if problems arise you'll see ValidationError
+        user_schema.validate(data)
+        # * Deserialize the data with dump()
+        user = user_schema.load(data)
+        user.password_hash = request.get_json().get("password")
+        db.session.add(user)
+        db.session.commit()
+        session["user_id"] = user.id
+        # * Serialize the data and package your JSON response
+        serialized_user = user_schema.dump(user)
+        return serialized_user, 201
+    except (Exception, IntegrityError) as e:
+        db.session.rollback()
+        return {"message": str(e)}, 400
+
+
+@app.route("/api/v1/logout", methods=["DELETE"])
+def logout():
+    if "user_id" in session:
+        del session["user_id"]
+    return {}, 204
+
+
+@app.route("/api/v1/me")
+def me():
+    if "user_id" not in session:
+        return {"message": "Unauthorized"}, 403
+    if user := db.session.get(User, session["user_id"]):
+        return user_schema.dump(user), 200
+    return {"message": "Unauthorized"}, 403
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5555)

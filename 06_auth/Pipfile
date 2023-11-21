@@ -14,6 +14,8 @@ ipdb = "*"
 faker = "*"
 flask-marshmallow = "*"
 marshmallow-sqlalchemy = "*"
+flask-bcrypt = "*"
+python-dotenv = "*"
 
 [dev-packages]
 ipdb = "*"

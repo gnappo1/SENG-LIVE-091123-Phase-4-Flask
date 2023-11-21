@@ -2,12 +2,7 @@
 
 ## Learning Goals
 
-- Connect a React App to Flask API
-- Execute a GET Request and One or More POST/PATCH Requests from a Front End Application
-- Use Flask Validation to Protect Data from Incorrect / Corrupt Requests
-- Discuss How to Handle Errors on Front End
-- Discuss yup
-- Discuss CORS
-
-## Stretch Goals
-- Discuss honcho and gunicorn
+- Discuss the Importance of Authentication in Web Apps
+- Ensure Students Understand the Difference between Identity Management (Authentication) and Access Management (Authorization)
+- Discuss the Relationship Between Cookies and Sessions
+- Demonstrate Token-Based Authentication (Identity Management) Using Cookies and Sessions
