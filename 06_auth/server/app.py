@@ -84,6 +84,8 @@ def after_request(response):
 class Productions(Resource):
     def get(self):
         prods = productions_schema.dump(Production.query)
+        #! example of using cookies -> not needed for app reasons
+        #! will stay there until unset!
         response = make_response(prods, 200)
         response.set_cookie("max_views", "4", httponly=True)
         return response
