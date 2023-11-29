@@ -7,5 +7,7 @@ class UserSchema(ma.SQLAlchemySchema):
         model = User
         load_instance = True
         
+    id = fields.Integer()
     email = fields.Email(required=True)
+    username = fields.String(required=True)
     password_hash = fields.String(validate=validate.Length(min=10, max=50))

@@ -254,7 +254,10 @@ def login():
 def signup():
     try:
         # * Extract data out of the request
-        data = {"email": request.get_json().get("email")}
+        data = {
+            "email": request.get_json().get("email"),
+            "username": request.get_json().get("username"),
+        }
         # * Validate the data, if problems arise you'll see ValidationError
         user_schema.validate(data)
         # * Deserialize the data with dump()

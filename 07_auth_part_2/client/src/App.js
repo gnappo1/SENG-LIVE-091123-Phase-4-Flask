@@ -62,7 +62,8 @@ function App() {
     <>
       <GlobalStyle />
       <Navigation/>
-      <Authentication updateUser={updateUser}/>
+      <div>{error}</div>
+      <Authentication updateUser={updateUser} handleNewError={handleNewError} />
     </>
   )
   return (

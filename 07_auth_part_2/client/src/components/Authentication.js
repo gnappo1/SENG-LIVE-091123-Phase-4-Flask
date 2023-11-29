@@ -22,8 +22,6 @@ function Authentication({user, updateUser}) {
             .matches(/[a-zA-Z0-9]/, 'Password can only contain Latin letters and numbers.')
     })
     const loginSchema = yup.object().shape({
-        username: yup.string()
-            .required("Please enter a user name"),
         email: yup.string()
             .email("Must be a valid email")
             .required("Please enter a user email"),

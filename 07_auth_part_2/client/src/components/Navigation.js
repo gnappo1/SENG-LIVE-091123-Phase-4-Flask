@@ -4,9 +4,9 @@ import styled from 'styled-components'
 import { useHistory } from 'react-router-dom'
 import { GiHamburgerMenu } from 'react-icons/gi'
 
-function Navigation({updateUser, user}) {
+function Navigation({updateUser, user, handleNewError}) {
  const [menu, setMenu] = useState(false)
- const history = useHistory()
+//  const history = useHistory()
 
  const handleLogout = () => {
     //! What do we do here?
