@@ -21,6 +21,12 @@ function App() {
   const [user, setUser] = useState(null);
   const history = useHistory()
 
+  const updateUser = (user) => setUser(user)
+
+  const handleNewError = useCallback((error) => {
+    setError(error);
+  }, []);
+
   const fetchProductions = () => {
     fetch("/productions")
     .then(response => {
@@ -34,9 +40,20 @@ function App() {
   }
 
   useEffect(() => {
-    //! What do we need to do here?
-    //! Do we always fetch the productions?
-  }, [])
+    if (!user) {
+      fetch("/me")
+      .then(res => {
+        if (res.ok) {
+          res.json().then(updateUser).then(fetchProductions)
+        } else {
+          res.json().then(errorObj => handleNewError(errorObj.message))
+        }
+      })
+      .catch(handleNewError)
+    } else {
+      fetchProductions()
+    }
+  }, [handleNewError, user])
 
   const addProduction = (production) => setProductions(productions => [...productions, production])
   const updateProduction = (updated_production) => setProductions(productions => productions.map(production =>{
@@ -46,17 +63,14 @@ function App() {
       return production
     }
   } ))
+
   const deleteProduction = (deleted_production_id) => setProductions(productions => productions.filter((production) => production.id !== Number(deleted_production_id)) )
 
   const handleEdit = (production) => {
     setProductionEdit(production)
     history.push({pathname: `/productions/edit/${production.id}`, state:{production}})
   }
-  const updateUser = (user) => setUser(user)
 
-  const handleNewError = useCallback((error) => {
-    setError(error);
-  }, []);
 
   if(!user) return (
     <>

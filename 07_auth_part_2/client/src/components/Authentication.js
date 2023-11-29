@@ -5,7 +5,7 @@ import { useFormik } from "formik"
 import * as yup from "yup"
 
 
-function Authentication({user, updateUser}) {
+function Authentication({updateUser, handleNewError}) {
     const [signUp, setSignUp] = useState(false)
     const history = useHistory()
 
@@ -29,6 +29,8 @@ function Authentication({user, updateUser}) {
             .required('Please enter a user password') 
     })
 
+    const url = signUp ? "/signup" : "/login"
+
     const formik = useFormik({
         initialValues: {
             username:'',
@@ -37,7 +39,21 @@ function Authentication({user, updateUser}) {
         },
         validationSchema: signUp ? signupSchema : loginSchema,
         onSubmit: (values) => {
-            //! What do we do here?
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(values)
+            })
+            .then(res => {
+                if (res.ok) {
+                    res.json().then(updateUser)
+                } else {
+                    res.json().then(errorObj => handleNewError(errorObj.message))
+                }
+            })
+            .catch(handleNewError)
         },
     })
 

@@ -194,6 +194,7 @@ api.add_resource(CrewMembers, "/crew_members")
 
 class CrewMemberById(Resource):
     def get(self, id):
+        
         cm = CrewMember.query.get_or_404(
             id, description=f"Could not find crew_member with id: {id}"
         )
