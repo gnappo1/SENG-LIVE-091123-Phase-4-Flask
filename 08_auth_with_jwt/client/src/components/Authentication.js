@@ -5,7 +5,7 @@ import { useFormik } from "formik"
 import * as yup from "yup"
 
 
-function Authentication({updateUser, handleNewError}) {
+function Authentication({updateUser, handleNewError, fetchProductions}) {
     const [signUp, setSignUp] = useState(false)
     const history = useHistory()
 
@@ -49,6 +49,7 @@ function Authentication({updateUser, handleNewError}) {
             .then(res => {
                 if (res.ok) {
                     res.json().then(updateUser)
+                    .then(fetchProductions)
                 } else {
                     res.json().then(errorObj => handleNewError(errorObj.message))
                 }

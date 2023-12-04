@@ -11,7 +11,10 @@ function Navigation({updateUser, user, handleNewError}) {
  const handleLogout = () => {
     //! What do we do here?
     fetch("/logout", {method: "DELETE"})
-    .then(() => updateUser(null))
+    .then(() => {
+      updateUser(null)
+      localStorage.removeItem("jwt_token")
+    })
     .catch(handleNewError)
  }
 

@@ -27,6 +27,11 @@ function App() {
     setError(error);
   }, []);
 
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
   const fetchProductions = () => {
     fetch("/productions")
     .then(response => {
@@ -45,15 +50,36 @@ function App() {
       .then(res => {
         if (res.ok) {
           res.json().then(updateUser).then(fetchProductions)
+        } else if (res.status === 401) {
+          fetch("/refresh", {
+            method: "POST",
+            headers: {
+              'X-CSRF-TOKEN': getCookie('csrf_refresh_token'),
+            }
+          })
+          .then(res => {
+            if (res.ok) {
+              res.json().then(updateUser).then(fetchProductions)
+            } else {
+              res.json().then(errorObj => handleNewError(errorObj.msg))
+            }
+          })
         } else {
-          res.json().then(errorObj => handleNewError(errorObj.message))
+          res.json().then(errorObj => handleNewError(errorObj.message || errorObj.msg))
         }
       })
       .catch(handleNewError)
-    } else {
-      fetchProductions()
     }
   }, [handleNewError, user])
+
+  useEffect(() => {
+    if (error) {
+      const timeout = setTimeout(() => handleNewError(""), 3000)
+      return () => {
+        clearTimeout(timeout)
+      };
+    }
+  }, [handleNewError, error]);
 
   const addProduction = (production) => setProductions(productions => [...productions, production])
   const updateProduction = (updated_production) => setProductions(productions => productions.map(production =>{
@@ -77,7 +103,7 @@ function App() {
       <GlobalStyle />
       <Navigation/>
       <div>{error}</div>
-      <Authentication updateUser={updateUser} handleNewError={handleNewError} />
+      <Authentication updateUser={updateUser} handleNewError={handleNewError} fetchProductions={fetchProductions}/>
     </>
   )
   return (

@@ -16,7 +16,6 @@ BACKEND Notes:
   - New Model: User (username/email, password -> password protection with bcrypt and hybrid property)
   - New Schema: UserSchema
 
-
 FRONTEND Notes:
   - New Route(s): (/register)
   - New Component(s): (Authentication)
