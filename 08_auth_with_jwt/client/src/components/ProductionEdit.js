@@ -41,7 +41,45 @@ function ProductionFormEdit({updateProduction, handleNewError}) {
       .required('Description is required')
   })
 
-  const {id, title, genre, budget, image, director, description, ongoing, crew_members} = location.state.production
+  const checkToken = () => fetch("/check", {
+    headers: {
+      //! NOTICE HERE I send the refresh token since I know the access token is expired
+      "Authorization": `Bearer ${localStorage.getItem("jwt_token")}`
+    }
+  })
+
+  const postRefreshToken = () => {
+    return fetch("/refresh", {
+      method: "POST",
+      headers: {
+        //! NOTICE HERE I send the refresh token since I know the access token is expired
+        "Authorization": `Bearer ${localStorage.getItem("refresh_token")}`
+      }
+    })
+  }
+
+  const patchFetchProductions = (values) => {
+    return fetch(`/productions/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem("jwt_token")}`
+        },
+        body: JSON.stringify(values)
+      })
+      .then(res => {
+        if (res.ok) {
+          res.json().then(data => {
+            updateProduction(data)
+            history.push(`/productions/${id}`)
+          })
+        } else {
+          res.json().then(errorObj => handleNewError(errorObj.message))
+        }
+      })
+      .catch(error => handleNewError(error))
+  }
+  const {id, title, genre, budget, image, director, description, ongoing} = location.state.production
   // 8.✅ useFormik hook
   const formik = useFormik({
     initialValues: {
@@ -55,24 +93,26 @@ function ProductionFormEdit({updateProduction, handleNewError}) {
     },
     validationSchema: productionSchema,
     onSubmit: (values) => {
-      fetch(`/productions/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(values, null, 2)
-      })
-      .then(res => {
-        if (res.ok) {
-          res.json().then(data => {
-            updateProduction(data)
-            history.push(`/productions/${id}`)
+      checkToken() //! make sure token is still valid
+      .then(resp => {
+        if (resp.ok) {
+          patchFetchProductions(values) //! try to fire a PATCH with a valid token
+        } else if (resp.status === 401) { //! token is invalid but maybe refresh token is still valid
+          postRefreshToken() //! try to refresh the token
+          .then(res => {
+            if (res.ok) { //! refresh token was still valid
+              res.json().then(respObj => {
+                //! update the expired token in localStorage with the newly created token coming from the API  
+                localStorage.setItem("jwt_token", respObj.jwt_token)
+              })
+              .then(() => patchFetchProductions(values)) //! try again to fire the PATCH now that a new token has been issued
+            } else {
+              res.json().then(errorObj => handleNewError(errorObj.msg))
+            }
           })
-        } else {
-          res.json().then(errorObj => handleNewError(errorObj.message))
         }
       })
-      .catch(error => handleNewError(error))
+      .catch(err => handleNewError(err))
     }
   })
 
@@ -82,22 +122,22 @@ function ProductionFormEdit({updateProduction, handleNewError}) {
       <div className='App'>
         <Form onSubmit={formik.handleSubmit}>
           <label>Title </label>
-          <input type='text' name='title' value={formik.values.title} onChange={formik.handleChange} />
+          <input type='text' name='title' value={formik.values.title} onChange={formik.handleChange} onBlur={formik.handleBlur} />
           {formik.errors.title && formik.touched.title ? <div className="error-message show">{formik.errors.title}</div> : null}
           <label> Genre</label>
-          <input type='text' name='genre' value={formik.values.genre} onChange={formik.handleChange} />
+          <input type='text' name='genre' value={formik.values.genre} onChange={formik.handleChange} onBlur={formik.handleBlur} />
           {formik.errors.genre && formik.touched.genre ? <div className="error-message show">{formik.errors.genre}</div> : null}
           <label>Budget</label>
-          <input type='number' name='budget' value={formik.values.budget} onChange={formik.handleChange} />
+          <input type='number' name='budget' value={formik.values.budget} onChange={formik.handleChange} onBlur={formik.handleBlur} />
           {formik.errors.budget && formik.touched.budget ? <div className="error-message show">{formik.errors.budget}</div> : null}
           <label>Image</label>
-          <input type='text' name='image'  value={formik.values.image} onChange={formik.handleChange} />
+          <input type='text' name='image'  value={formik.values.image} onChange={formik.handleChange} onBlur={formik.handleBlur} />
           {formik.errors.image && formik.touched.image ? <div className="error-message show">{formik.errors.image}</div> : null}
           <label>Director</label>
-          <input type='text' name='director' value={formik.values.director} onChange={formik.handleChange} />
+          <input type='text' name='director' value={formik.values.director} onChange={formik.handleChange} onBlur={formik.handleBlur} />
           {formik.errors.director && formik.touched.director ? <div className="error-message show">{formik.errors.director}</div> : null}
           <label>Description</label>
-          <textarea type='text' rows='4' cols='50' name='description' value={formik.values.description} onChange={formik.handleChange} />
+          <textarea type='text' rows='4' cols='50' name='description' value={formik.values.description} onChange={formik.handleChange} onBlur={formik.handleBlur} />
           {formik.errors.description && formik.touched.description ? <div className="error-message show">{formik.errors.description}</div> : null}
           <input type='submit' disabled={formik.isSubmitting} />
         </Form> 

@@ -4,8 +4,6 @@ from sqlalchemy.exc import IntegrityError
 from marshmallow import ValidationError
 from flask_jwt_extended import (
     jwt_required,
-    get_jwt_identity,
-    current_user
 )
 from app_setup import db
 from models.production import Production
@@ -24,6 +22,7 @@ class Productions(Resource):
         #! will stay there until unset!
         return prods, 200
 
+    @jwt_required()
     def post(self):
         try:
             # * Extract data out of the request

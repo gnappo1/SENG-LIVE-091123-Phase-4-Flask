@@ -10,10 +10,9 @@ from routes.productions import Productions
 from routes.welcome import Welcome
 from routes.auth.signup import Signup
 from routes.auth.login import Login
-from routes.auth.logout import Logout
 from routes.auth.me import Me
 from routes.auth.refresh import Refresh
-
+from routes.auth.check_token import CheckToken
 #! Routes
 api.add_resource(Welcome, "/")
 #! GET/POST Productions routes
@@ -28,13 +27,13 @@ api.add_resource(CrewMemberById, "/crew_members/<int:id>")
 api.add_resource(Signup, "/signup")
 #! POST Login
 api.add_resource(Login, "/login")
-#! DELETE Logout
-api.add_resource(Logout, "/logout")
 #! GET Me
 api.add_resource(Me, "/me")
 #! POST Refresh
 api.add_resource(Refresh, "/refresh")
-
+#! GET Check Token
+api.add_resource(CheckToken, "/check")
+#! No need for a logout route in this configuration!
 
 # Register a callback function that loads a user from your database whenever
 # a protected route is accessed. This should return any python object on a

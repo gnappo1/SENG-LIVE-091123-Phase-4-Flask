@@ -46,25 +46,36 @@ function App() {
 
   useEffect(() => {
     if (!user) {
-      fetch("/me")
+      //! ask the API if they know who we are with the jwt token from localStorage
+      fetch("/me", {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("jwt_token")}` //! as specified in the docs
+        }
+      })
       .then(res => {
-        if (res.ok) {
+        if (res.ok) { //! token is valid
           res.json().then(updateUser).then(fetchProductions)
-        } else if (res.status === 401) {
+        } else if (res.status === 401) { //! token is invalid but maybe refresh token is still valid
           fetch("/refresh", {
             method: "POST",
             headers: {
-              'X-CSRF-TOKEN': getCookie('csrf_refresh_token'),
+              //! NOTICE HERE I send the refresh token since I know the access token is expired
+              "Authorization": `Bearer ${localStorage.getItem("refresh_token")}`
             }
           })
           .then(res => {
-            if (res.ok) {
-              res.json().then(updateUser).then(fetchProductions)
+            if (res.ok) { //! refresh token was still valid
+              res.json().then(respObj => {
+                //! update the user
+                updateUser(respObj.user)
+                //! update the expired token in localStorage with the newly created token coming from the API  
+                localStorage.setItem("jwt_token", respObj.jwt_token)
+              }).then(fetchProductions)
             } else {
               res.json().then(errorObj => handleNewError(errorObj.msg))
             }
           })
-        } else {
+        } else { //! both tokens are invalid
           res.json().then(errorObj => handleNewError(errorObj.message || errorObj.msg))
         }
       })

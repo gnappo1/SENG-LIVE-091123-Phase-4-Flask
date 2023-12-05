@@ -48,7 +48,11 @@ function Authentication({updateUser, handleNewError, fetchProductions}) {
             })
             .then(res => {
                 if (res.ok) {
-                    res.json().then(updateUser)
+                    res.json().then(respObj => {
+                        updateUser(respObj.user)
+                        localStorage.setItem("jwt_token", respObj.jwt_token)
+                        localStorage.setItem("refresh_token", respObj.refresh_token)
+                    })
                     .then(fetchProductions)
                 } else {
                     res.json().then(errorObj => handleNewError(errorObj.message))
@@ -67,18 +71,18 @@ function Authentication({updateUser, handleNewError, fetchProductions}) {
             </div>
             <Form onSubmit={formik.handleSubmit}>
                 <label htmlFor='email'>Email</label>
-                <input type='text' name='email' value={formik.values.email} onChange={formik.handleChange} />
-                {formik.errors.email ? <div className="error-message show">{formik.errors.email}</div> : null}
+                <input type='text' name='email' value={formik.values.email} onChange={formik.handleChange} onBlur={formik.handleBlur} />
+                {formik.errors.email && formik.touched.email ? <div className="error-message show">{formik.errors.email}</div> : null}
                 {signUp &&(
                     <>
                         <label htmlFor='username'>Username</label>
-                        <input type='text' name='username' value={formik.values.username} onChange={formik.handleChange} />
-                        {formik.errors.username ? <div className="error-message show">{formik.errors.username}</div> : null}
+                        <input type='text' name='username' value={formik.values.username} onChange={formik.handleChange} onBlur={formik.handleBlur} />
+                        {formik.errors.username && formik.touched.username ? <div className="error-message show">{formik.errors.username}</div> : null}
                     </>
                 )}
                 <label htmlFor='password'>Password</label>
-                <input type='password' name='password' value={formik.values.password} onChange={formik.handleChange} />
-                {formik.errors.password ? <div className="error-message show">{formik.errors.password}</div> : null}
+                <input type='password' name='password' value={formik.values.password} onChange={formik.handleChange} onBlur={formik.handleBlur} />
+                {formik.errors.password && formik.touched.password ? <div className="error-message show">{formik.errors.password}</div> : null}
                 <input type='submit' value={signUp?'Sign Up!':'Log In!'} />
             </Form>
         </>

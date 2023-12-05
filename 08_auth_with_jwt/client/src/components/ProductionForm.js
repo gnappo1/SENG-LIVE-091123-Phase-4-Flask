@@ -37,6 +37,44 @@ function ProductionForm({addProduction, handleNewError}) {
     .required("Description is required")
  })
 
+  const postFetchProductions = (values) => {
+    return fetch("/productions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${localStorage.getItem("jwt_token")}`
+      },
+      body: JSON.stringify({...values, ongoing: true})
+    })
+    .then(resp => {
+      if (resp.ok) { //! 201 successfully created
+        resp.json().then((newProduction) => {
+          addProduction(newProduction)
+          history.push("/")
+        })
+      } else { //! validation errors
+        resp.json().then(errorObj => handleNewError(errorObj.message))
+      }
+    })
+    .catch(err => handleNewError(err))
+  }
+
+  const checkToken = () => fetch("/check", {
+    headers: {
+      //! NOTICE HERE I send the refresh token since I know the access token is expired
+      "Authorization": `Bearer ${localStorage.getItem("jwt_token")}`
+    }
+  })
+
+  const postRefreshToken = () => {
+    return fetch("/refresh", {
+      method: "POST",
+      headers: {
+        //! NOTICE HERE I send the refresh token since I know the access token is expired
+        "Authorization": `Bearer ${localStorage.getItem("refresh_token")}`
+      }
+    })
+  }
 
   // 9.✅ useFormik hook
     return (
@@ -45,24 +83,25 @@ function ProductionForm({addProduction, handleNewError}) {
           initialValues={{ title: '', genre: '', budget: '', image: '', director: '', description: '', ongoing: '' }}
           validationSchema={productionSchema}
           onSubmit={(values) => {
-            fetch("/productions", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({...values, ongoing: true})
-            })
+            checkToken() //! make sure token is still valid
             .then(resp => {
-              if (resp.ok) { //! 201
-                resp.json().then((newProduction) => {
-                  addProduction(newProduction)
-                  history.push("/")
+              if (resp.ok) {
+                postFetchProductions(values) //! try to fire a POST with a valid token
+              } else if (resp.status === 401) { //! token is invalid but maybe refresh token is still valid
+                postRefreshToken() //! try to refresh the token
+                .then(res => {
+                  if (res.ok) { //! refresh token was still valid
+                    res.json().then(respObj => {
+                      //! update the expired token in localStorage with the newly created token coming from the API  
+                      localStorage.setItem("jwt_token", respObj.jwt_token)
+                    })
+                    .then(() => postFetchProductions(values)) //! try again to fire the POST now that a new token has been issued
+                  } else {
+                    res.json().then(errorObj => handleNewError(errorObj.msg))
+                  }
                 })
-              } else {
-                resp.json().then(errorObj =>handleNewError(errorObj.message))
               }
             })
-            .catch(errorObj =>handleNewError(errorObj.message))
           }}
         >
           {({

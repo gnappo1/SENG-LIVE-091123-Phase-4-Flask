@@ -9,13 +9,12 @@ function Navigation({updateUser, user, handleNewError}) {
 //  const history = useHistory()
 
  const handleLogout = () => {
-    //! What do we do here?
-    fetch("/logout", {method: "DELETE"})
-    .then(() => {
-      updateUser(null)
-      localStorage.removeItem("jwt_token")
-    })
-    .catch(handleNewError)
+    //! No need to send a request to the API
+    //! There is nothing our API can currently do to invalidate this token
+    //! the frontend simply has to remove the tokenS (as in both of them) from localStorage 
+    localStorage.removeItem("jwt_token")
+    localStorage.removeItem("refresh_token")
+    updateUser(null)
  }
 
     return (
@@ -36,7 +35,7 @@ function Navigation({updateUser, user, handleNewError}) {
                   </>
 
                 ) : (
-                  <li><Link to='/authentication'> Login/Signup</Link></li>
+                  <li><Link to='/'> Login/Signup</Link></li>
                 )}
               </ul>
             }

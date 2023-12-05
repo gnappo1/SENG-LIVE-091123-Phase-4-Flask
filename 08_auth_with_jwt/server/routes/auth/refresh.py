@@ -16,8 +16,8 @@ user_schema = UserSchema(session=db.session)
 class Refresh(Resource):
     @jwt_required(refresh=True)
     def post(self):
-        id_ = get_jwt_identity()
-        response = make_response(user_schema.dump(current_user), 200)
-        access_token = create_access_token(identity=id_)
-        set_access_cookies(response, access_token)
-        return response
+        try:
+            jwt = create_access_token(identity=get_jwt_identity())
+            return make_response({"user": user_schema.dump(current_user), "jwt_token": jwt}, 200)
+        except Exception as e:
+            return {"message": str(e)}, 400

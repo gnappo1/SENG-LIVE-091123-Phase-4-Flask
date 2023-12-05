@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request, make_response
 from flask_restful import Resource
 from flask_jwt_extended import (
     create_access_token,
@@ -34,13 +34,8 @@ class Signup(Resource):
             refresh_token = create_refresh_token(identity=user.id)
             #! serialize the user
             serialized_user = user_schema.dump(user)
-            #! prepackage the response
-            response = jsonify(serialized_user)
-            #! set both cookies on the response - they will be sent along with every request until unset
-            set_access_cookies(response, jwt)
-            set_refresh_cookies(response, refresh_token)
             #! ready to send the response!
-            return response, 201
+            return make_response({"user": serialized_user, "jwt_token": jwt, "refresh_token": refresh_token}, 201)
         except (Exception, IntegrityError) as e:
             db.session.rollback()
             return {"message": str(e)}, 400

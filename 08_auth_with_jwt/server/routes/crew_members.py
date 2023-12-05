@@ -1,7 +1,7 @@
 from flask import request, abort
 from flask_restful import Resource
 from marshmallow import ValidationError
-from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
+from flask_jwt_extended import jwt_required
 from app_setup import db
 from models.crew_member import CrewMember
 from schemas.crew_member_schema import CrewMemberSchema
@@ -15,6 +15,7 @@ class CrewMembers(Resource):
         crew = crew_members_schema.dump(CrewMember.query)
         return crew, 200
 
+    @jwt_required()
     def post(self):
         try:
             data = request.json

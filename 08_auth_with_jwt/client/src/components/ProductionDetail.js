@@ -22,8 +22,30 @@ function ProductionDetail({handleEdit, deleteProduction, handleNewError}) {
     .catch(handleNewError)
   },[prod_id, handleNewError])
 
-  const handleDelete = () => {
-    fetch(`/productions/${prod_id}`, {method: "DELETE"})
+  const checkToken = () => fetch("/check", {
+    headers: {
+      //! NOTICE HERE I send the refresh token since I know the access token is expired
+      "Authorization": `Bearer ${localStorage.getItem("jwt_token")}`
+    }
+  })
+
+  const postRefreshToken = () => {
+    return fetch("/refresh", {
+      method: "POST",
+      headers: {
+        //! NOTICE HERE I send the refresh token since I know the access token is expired
+        "Authorization": `Bearer ${localStorage.getItem("refresh_token")}`
+      }
+    })
+  }
+
+  const deleteFetchProduction = () => {
+    return fetch(`/productions/${prod_id}`, {
+      method: "DELETE",
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem("jwt_token")}`
+      }
+    })
     .then(response => {
       if (response.ok){ //! 204
         deleteProduction(prod_id)
@@ -33,6 +55,29 @@ function ProductionDetail({handleEdit, deleteProduction, handleNewError}) {
       }
     })
     .catch(handleNewError)
+  }
+
+  const handleDelete = () => {
+    checkToken() //! make sure token is still valid
+    .then(resp => {
+      if (resp.ok) {
+        deleteFetchProduction() //! try to fire a DELETE with a valid token
+      } else if (resp.status === 401) { //! token is invalid but maybe refresh token is still valid
+        postRefreshToken() //! try to refresh the token
+        .then(res => {
+          if (res.ok) { //! refresh token was still valid
+            res.json().then(respObj => {
+              //! update the expired token in localStorage with the newly created token coming from the API  
+              localStorage.setItem("jwt_token", respObj.jwt_token)
+            })
+            .then(deleteFetchProduction) //! try again to fire the DELETE now that a new token has been issued
+          } else {
+            res.json().then(errorObj => handleNewError(errorObj.msg))
+          }
+        })
+      }
+    })
+    .catch(err => handleNewError(err))
   }
 
   if (!production.id) {

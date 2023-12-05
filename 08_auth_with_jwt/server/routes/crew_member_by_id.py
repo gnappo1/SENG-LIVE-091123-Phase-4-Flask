@@ -17,6 +17,7 @@ class CrewMemberById(Resource):
         crew_member_schema = CrewMemberSchema()
         return crew_member_schema.dump(cm), 200
 
+    @jwt_required()
     def patch(self, id):
         cm = CrewMember.query.get_or_404(
             id, description=f"Could not find crew_member with id: {id}"
@@ -31,6 +32,7 @@ class CrewMemberById(Resource):
             db.session.rollback()
             abort(400, str(e))
 
+    @jwt_required()
     def delete(self, id):
         cm = CrewMember.query.get_or_404(
             id, description=f"Could not find crew_member with id: {id}"

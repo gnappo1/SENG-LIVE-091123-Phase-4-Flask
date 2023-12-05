@@ -24,6 +24,7 @@ class ProductionById(Resource):
         except Exception as e:
             abort(400, str(e))
 
+    @jwt_required()
     def patch(self, id):
         prod = Production.query.get_or_404(
             id, description=f"Could not find production with id: {id}"
@@ -40,6 +41,7 @@ class ProductionById(Resource):
             db.session.rollback()
             abort(400, str(e))
 
+    @jwt_required()
     def delete(self, id):
         prod = Production.query.get_or_404(
             id, description=f"Could not find production with id: {id}"

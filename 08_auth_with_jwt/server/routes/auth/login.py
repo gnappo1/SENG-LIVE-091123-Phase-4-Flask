@@ -26,13 +26,8 @@ class Login(Resource):
                 refresh_token = create_refresh_token(identity=user.id)
                 #! serialize the user
                 serialized_user = user_schema.dump(user)
-                #! prepackage the response
-                response = make_response(serialized_user, 200)
-                #! set both cookies on the response - they will be sent along with every request until unset
-                set_access_cookies(response, jwt)
-                set_refresh_cookies(response, refresh_token)
                 #! ready to send the response!
-                return response
+                return make_response({"user": serialized_user, "jwt_token": jwt, "refresh_token": refresh_token}, 200)
             return {"message": "Invalid Credentials"}, 403
         except Exception as e:
             return {"message": "Invalid Credentials"}, 403
