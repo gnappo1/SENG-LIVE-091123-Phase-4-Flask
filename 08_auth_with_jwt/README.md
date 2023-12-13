@@ -1,8 +1,13 @@
-# Client <=> Server Communication
+# Authentication and Authorization using JWT Tokens
 
-## Learning Goals
+- Review JWT tokens, their nature and structure
+- Compare session-based and token-based auth
+- Review flask-jwt-extended
+- Analyze: How will the backend change?
+- Analyze: How do we ensure the user stays logged in once the access token expires
+- Analyze: JWT token location
+- Implement tokens in both headers and cookies
+- Demonstrate localStorage token-storage strategy
 
-- Discuss the Importance of Authentication in Web Apps
-- Ensure Students Understand the Difference between Identity Management (Authentication) and Access Management (Authorization)
-- Discuss the Relationship Between Cookies and Sessions
-- Demonstrate Token-Based Authentication (Identity Management) Using Cookies and Sessions
+## Stretch Goals 
+- Demonstrate cookies token-storage strategy with CSRF token protection

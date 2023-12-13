@@ -1,8 +1,21 @@
-# Client <=> Server Communication
+# Implementing Authentication and Authorization in a FS Flask-React application
 
-## Learning Goals
+## Why do we have to remember the user who attempted to login/signup?
+  - UX, we do not want them to re-login every time
+  - Statelessness of the HTTP protocol
 
-- Discuss the Importance of Authentication in Web Apps
-- Ensure Students Understand the Difference between Identity Management (Authentication) and Access Management (Authorization)
-- Discuss the Relationship Between Cookies and Sessions
-- Demonstrate Token-Based Authentication (Identity Management) Using Cookies and Sessions
+
+## How can we implement the logic? What are the options our there?
+    - session-based auth (sent back and forth with requests)
+    - token-based authentication (sent back and forth with requests)
+
+- What are the steps involved in planning for such a big feature?
+
+## BACKEND Notes:
+  - New Routes (/register, /login, /logout, /me)
+  - New Model: User (username/email, password -> password protection with bcrypt and hybrid property)
+  - New Schema: UserSchema
+
+
+## FRONTEND Notes:
+  - TBD in pt. 2
