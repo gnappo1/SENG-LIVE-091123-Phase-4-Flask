@@ -1,6 +1,5 @@
 # SENG-LIVE-Flask-P4
 
-A full collection of resources can be found here: [mothership](https://docs.google.com/spreadsheets/d/1t9KuB4DPomAytCdjIU0vjeBrW5olDA_nK5Jxkd4phrA/edit?pli=1#gid=651275681)
 
 # Group Sessions
 
